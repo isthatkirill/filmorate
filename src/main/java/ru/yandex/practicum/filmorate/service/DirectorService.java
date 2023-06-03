@@ -29,7 +29,7 @@ public class DirectorService {
     }
 
     public Director findDirectorById(Integer id) {
-        log.info("Get genre by id = {}", id);
+        log.info("Get director by id = {}", id);
         return checkDirectorExistent(id);
     }
 

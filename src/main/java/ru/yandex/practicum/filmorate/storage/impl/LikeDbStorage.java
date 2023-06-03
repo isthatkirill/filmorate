@@ -2,8 +2,10 @@ package ru.yandex.practicum.filmorate.storage.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exceptions.OnUpdateException;
 import ru.yandex.practicum.filmorate.storage.LikeStorage;
 
 import java.util.HashSet;
@@ -20,8 +22,11 @@ public class LikeDbStorage implements LikeStorage {
 
     @Override
     public void addLike(Long filmId, Long userId) {
-        String query = "INSERT INTO films_likes (film_id, user_id) values (?, ?)";
-        jdbcTemplate.update(query, filmId, userId);
+        try {
+            String query = "INSERT INTO films_likes (film_id, user_id) values (?, ?)";
+            jdbcTemplate.update(query, filmId, userId);
+        } catch (DataAccessException ignored) {
+        }
     }
 
     @Override

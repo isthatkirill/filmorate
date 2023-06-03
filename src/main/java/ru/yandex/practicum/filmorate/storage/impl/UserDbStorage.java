@@ -45,6 +45,7 @@ public class UserDbStorage implements UserStorage {
             user.setId(userId.longValue());
             return user;
         } catch (DataAccessException e) {
+            log.warn(e.getMessage());
             throw new OnUpdateException("This user already exists");
         }
     }
@@ -81,7 +82,7 @@ public class UserDbStorage implements UserStorage {
             log.info("User with id = {} not found", id);
             return Optional.empty();
         }
-        log.info("Genre found: {} {}", users.get(0).getId(), users.get(0).getName());
+        log.info("User found: {} {}", users.get(0).getId(), users.get(0).getName());
         return Optional.of(users.get(0));
     }
 
