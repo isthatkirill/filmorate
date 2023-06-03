@@ -29,6 +29,10 @@ target/
 *.iml
 *.ipr
 .mvn
+mvnw
+mvnw.cmd
+checkstyle.xml
+suppressions.xml
 
 ### NetBeans ###
 /nbproject/private/
