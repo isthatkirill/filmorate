@@ -3,12 +3,11 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exceptions.OnUpdateException;
 import ru.yandex.practicum.filmorate.exceptions.EntityNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.OnUpdateException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
-
 
 import java.util.List;
 
@@ -23,7 +22,7 @@ public class UserService {
     public User addFriend(Long userId, Long friendId) {
         User user = checkUserExistent(userId);
         checkUserExistent(friendId);
-        if (friendshipStorage.checkIfFriends(userId, friendId)) {
+        if (existsByUserIdAndFriendId(userId, friendId)) {
             throw new OnUpdateException("This user is already in your list");
         }
         friendshipStorage.addFriend(userId, friendId);
@@ -34,7 +33,7 @@ public class UserService {
     public User deleteFriend(Long userId, Long friendId) {
         User user = checkUserExistent(userId);
         checkUserExistent(friendId);
-        if (!friendshipStorage.checkIfFriends(userId, friendId)) {
+        if (!existsByUserIdAndFriendId(userId, friendId)) {
             throw new OnUpdateException("This user not is your friend");
         }
         friendshipStorage.deleteFriend(userId, friendId);
@@ -82,6 +81,10 @@ public class UserService {
         return userStorage
                 .findUserById(id)
                 .orElseThrow(() -> new EntityNotFoundException(User.class, "Id: " + id));
+    }
+
+    public Boolean existsByUserIdAndFriendId(Long userId, Long friendId) {
+        return friendshipStorage.existsByUserIdAndFriendId(userId, friendId);
     }
 
     private void updateUserIfNameIsBlank(User user) {

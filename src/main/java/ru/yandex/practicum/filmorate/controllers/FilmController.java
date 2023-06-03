@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.controllers;
 
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,5 +54,16 @@ public class FilmController {
     @GetMapping("/popular")
     public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") @Positive Integer count) {
         return filmService.getPopularFilms(count);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getDirectorFilms(@PathVariable("directorId") @Positive Integer directorId, @RequestParam String sortBy) {
+        return filmService.sortFilmDirector(directorId, sortBy);
+    }
+
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(@RequestParam @Positive Long userId,
+                                     @RequestParam @Positive Long friendId) {
+        return filmService.getCommonFilmsByUsers(userId, friendId);
     }
 }

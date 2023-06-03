@@ -29,9 +29,17 @@ public class Film {
     private Integer duration;
     @NotNull
     private Mpa mpa;
+
     private final Set<Genre> genres = new HashSet<>();
+
+    private final Set<Director> directors = new HashSet<>();
 
     public void addGenre(Genre genre) {
         genres.add(genre);
     }
+
+    public void addDirector(Director director) {
+        directors.add(director);
+    }
+
 }

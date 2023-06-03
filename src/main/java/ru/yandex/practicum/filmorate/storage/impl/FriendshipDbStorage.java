@@ -40,7 +40,7 @@ public class FriendshipDbStorage implements FriendshipStorage {
     }
 
     @Override
-    public Boolean checkIfFriends(Long userId, Long friendId) {
+    public Boolean existsByUserIdAndFriendId(Long userId, Long friendId) {
         String query = "SELECT COUNT(*) as count_must_be_1 \n" +
                 "FROM user_friends \n" +
                 "WHERE user_id = ? AND friend_id = ?";

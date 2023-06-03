@@ -11,7 +11,7 @@ public interface FriendshipStorage {
 
     Long deleteFriend(Long userId, Long friendId);
 
-    Boolean checkIfFriends(Long userId, Long friendId);
+    Boolean existsByUserIdAndFriendId(Long userId, Long friendId);
 
     List<User> getCommonFriends(Long firstUserId, Long secondUserId);
 }
