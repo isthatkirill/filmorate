@@ -2,13 +2,15 @@ package ru.yandex.practicum.filmorate.handler;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.OnUpdateException;
-import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
+
+import javax.validation.ConstraintViolationException;
+import java.sql.SQLException;
 
 @Slf4j
 @RestControllerAdvice("ru.yandex.practicum.filmorate")
@@ -16,35 +18,48 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse userNotFoundHandle(final UserNotFoundException e) {
-        log.warn(e.getClass().getSimpleName() + " " + e.getMessage());
-        return new ErrorResponse("User not found", e.getMessage());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse filmNotFoundHandle(final FilmNotFoundException e) {
-        log.warn(e.getClass().getSimpleName() + " " + e.getMessage());
-        return new ErrorResponse("Film not found", e.getMessage());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse invalidDataHandle(final ValidationException e) {
-        log.warn(e.getClass().getSimpleName() + " " + e.getMessage());
-        return new ErrorResponse("Invalid data", e.getMessage());
+    public ErrorResponse entityNotFoundHandle(final EntityNotFoundException e) {
+        log.warn(e.getMessage());
+        return new ErrorResponse("Not found", e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse invalidUpdateHandle(final OnUpdateException e) {
+        log.warn("{}: {}", e.getClass().getSimpleName(), e.getMessage());
         return new ErrorResponse("Invalid data for update", e.getMessage());
     }
 
     @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse badValidationHandle(final MethodArgumentNotValidException e) {
+        String errorMessage = e.getBindingResult()
+                .getAllErrors()
+                .get(0)
+                .getDefaultMessage();
+
+        log.warn("{}: {}", e.getClass().getSimpleName(), errorMessage);
+        return new ErrorResponse("Validation error", errorMessage);
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse badValidationHandle(final ConstraintViolationException e) {
+        log.warn("{}: {}", e.getClass().getSimpleName(), e.getMessage());
+        return new ErrorResponse("Validation error", e.getMessage());
+    }
+
+    @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse exceptionHandle(final RuntimeException e) {
-        log.warn(e.getClass().getSimpleName() + " " + e.getMessage());
+    public ErrorResponse exceptionHandle(final Exception e) {
+        log.warn("{}: {}", e.getClass().getSimpleName(), e.getMessage());
         return new ErrorResponse("Server error", e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse dbError(final SQLException e) {
+        log.warn("{}: {}", e.getClass().getSimpleName(), e.getMessage());
+        return new ErrorResponse("Internal error while working with db", e.getMessage());
     }
 }
