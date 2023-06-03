@@ -28,6 +28,8 @@ public class Mappers {
 
     public static final RowMapper<Long> LIKE_MAPPER = (ResultSet rs, int rowNum) -> rs.getLong("user_id");
 
+    public static final RowMapper<Long> ID_SIMILAR_MAPPER = (rs, rowNum) -> rs.getLong("user2");
+
     public static final RowMapper<Film> FILM_MAPPER = (ResultSet rs, int rowNum) ->
             Film.builder()
                     .id(rs.getLong("film_id"))

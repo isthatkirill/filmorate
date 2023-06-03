@@ -9,12 +9,11 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.sql.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
+import static ru.yandex.practicum.filmorate.storage.SqlQueries.*;
 import static ru.yandex.practicum.filmorate.util.Mappers.FILM_MAPPER;
+import static ru.yandex.practicum.filmorate.util.Mappers.ID_SIMILAR_MAPPER;
 
 @Slf4j
 @Component
@@ -25,6 +24,13 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film addFilm(Film film) {
+        Optional<Film> filmMatch = findMatch(film);
+        if (filmMatch.isPresent()) {
+            film.setId(filmMatch.get().getId());
+            log.info("Attempting to duplicate a film: {} {}", film.getId(), film.getName());
+            return film;
+        }
+
         SimpleJdbcInsert insert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("films")
                 .usingGeneratedKeyColumns("film_id");
@@ -38,76 +44,116 @@ public class FilmDbStorage implements FilmStorage {
 
         Number filmId = insert.executeAndReturnKey(parameters);
         film.setId(filmId.longValue());
+        log.info("Film create: {} {}", film.getId(), film.getName());
         return film;
     }
 
     @Override
     public Film updateFilm(Film film) {
-        String query = "UPDATE FILMS set name = ?, description = ?, release_date = ?, " +
-                "duration_minutes = ?, mpa_id = ? WHERE film_id = ?";
-        jdbcTemplate.update(query,
+        jdbcTemplate.update(UPDATE_FILM_BY_ID,
                 film.getName(),
                 film.getDescription(),
                 film.getReleaseDate(),
                 film.getDuration(),
                 film.getMpa().getId(),
                 film.getId());
+        log.info("Film update: {} {}", film.getId(), film.getName());
         return film;
     }
 
     @Override
     public List<Film> getAllFilms() {
-        String query = "SELECT films.*, mpa.name AS mpa_name " +
-                "FROM films LEFT OUTER JOIN mpa ON films.mpa_id = mpa.mpa_id";
-        return jdbcTemplate.query(query, FILM_MAPPER);
+        log.info("Received all films");
+        return jdbcTemplate.query(FIND_ALL_FILMS, FILM_MAPPER);
     }
 
     @Override
     public Optional<Film> findFilmById(Long id) {
-        String query = "SELECT films.*, mpa.name AS mpa_name " +
-                "FROM films LEFT OUTER JOIN mpa ON films.mpa_id = mpa.mpa_id WHERE film_id = ?";
-        List<Film> films = jdbcTemplate.query(query, FILM_MAPPER, id);
+        List<Film> films = jdbcTemplate.query(FIND_FILM_BY_ID, FILM_MAPPER, id);
         if (films.isEmpty()) {
             log.info("Film with id = {} not found", id);
             return Optional.empty();
         }
-        log.info("Film found: {} {}", films.get(0).getId(), films.get(0).getName());
+
+        log.info("Film found: {}", films.get(0).getId());
         return Optional.of(films.get(0));
     }
 
     @Override
+    public void deleteFilm(Long id) {
+        jdbcTemplate.update(DELETE_FILM, id);
+    }
+
+    @Override
     public List<Film> getPopularFilms(Integer count) {
-        String query = "SELECT f.*, COUNT(fl.user_id) AS total_likes, mpa.name AS mpa_name\n" +
-                "FROM films as f\n" +
-                "LEFT JOIN films_likes AS fl ON f.film_id = fl.film_id\n" +
-                "LEFT OUTER JOIN mpa ON f.mpa_id = mpa.mpa_id\n" +
-                "GROUP BY f.film_id\n" +
-                "ORDER BY total_likes DESC\n" +
-                "LIMIT ?";
-        return jdbcTemplate.query(query, FILM_MAPPER, count);
+        return jdbcTemplate.query(FIND_POPULAR_FILMS, FILM_MAPPER, count);
+    }
+
+    public List<Film> getPopularFilmsByGenreAndYear(Integer count, Long genreId, Short year) {
+        return jdbcTemplate.query(FIND_POPULAR_FILMS_BY_GENRE_ID_AND_YEAR, FILM_MAPPER, genreId, year, count);
+    }
+
+    public List<Film> getPopularFilmsByYear(Integer count, Short year) {
+        return jdbcTemplate.query(FIND_POPULAR_FILMS_BY_YEAR, FILM_MAPPER, year, count);
+    }
+
+    public List<Film> getPopularFilmsByGenre(Integer count, Long genreId) {
+        return jdbcTemplate.query(FIND_POPULAR_FILMS_BY_GENRE_ID, FILM_MAPPER, genreId, count);
     }
 
     @Override
     public List<Film> findFilmListDirectorById(long director) {
-        String  sql = "SELECT films.*, mpa.name AS mpa_name " +
-                "FROM films LEFT OUTER JOIN mpa ON films.mpa_id = mpa.mpa_id WHERE film_id IN " +
-                "(SELECT film_id FROM FILM_DIRECTORS WHERE DIRECTOR_ID =?)";
-
-        List<Film> filmsDirectorList = jdbcTemplate.query(sql,FILM_MAPPER, director);
-        return filmsDirectorList;
+        return jdbcTemplate.query(FIND_FILMS_BY_DIRECTOR_ID, FILM_MAPPER, director);
     }
 
     @Override
+    public List<Film> searchFilmsByTitle(String query) {
+        return jdbcTemplate.query(SEARCH_FILMS_BY_TITLE, FILM_MAPPER, query);
+    }
+
+    @Override
+    public List<Film> searchFilmByDirector(String query) {
+        return jdbcTemplate.query(SEARCH_FILMS_BY_DIRECTOR, FILM_MAPPER, query);
+    }
+
+    @Override
+    public List<Film> searchFilmsByTitleAndDirector(String query) {
+        return jdbcTemplate.query(SEARCH_FILMS_BY_TITLE_AND_DIRECTOR, FILM_MAPPER, query, query);
+    }
+
+
+    @Override
     public List<Film> getCommonFilmsByUsers(Long userId, Long friendId) {
-        String query = "SELECT f.*, COUNT(fl.user_id) AS total_likes, mpa.name AS mpa_name\n" +
-                "FROM films as f\n" +
-                "LEFT JOIN films_likes AS fl ON f.film_id = fl.film_id\n" +
-                "LEFT OUTER JOIN mpa ON f.mpa_id = mpa.mpa_id\n" +
-                "WHERE f.film_id IN (SELECT film_id FROM films_likes WHERE user_id = ?\n" +
-                "INTERSECT\n" +
-                "SELECT film_id FROM films_likes  WHERE user_id = ?)\n" +
-                "GROUP BY f.film_id\n" +
-                "ORDER BY total_likes DESC";
-        return jdbcTemplate.query(query, FILM_MAPPER, userId, friendId);
+        return jdbcTemplate.query(GET_COMMON_FILMS_BY_USERS, FILM_MAPPER, userId, friendId);
+    }
+
+    public List<Film> getRecommendations(Long userId) {
+        List<Long> similarUser = getSimilarUser(userId);
+
+        if (similarUser.isEmpty()) {
+            log.info("Not found similar users. Unable to make recommendations");
+            return Collections.emptyList();
+        }
+
+        return jdbcTemplate.query(GET_RECOMMENDATIONS,
+                FILM_MAPPER,
+                similarUser.get(0),
+                userId);
+    }
+
+    private List<Long> getSimilarUser(Long userId) {
+        return jdbcTemplate.query(GET_SIMILAR_USER, ID_SIMILAR_MAPPER, userId, userId);
+    }
+
+    private Optional<Film> findMatch(Film film) {
+        List<Film> films = jdbcTemplate.query(FIND_MATCH, FILM_MAPPER,
+                film.getName(),
+                film.getReleaseDate(),
+                film.getDuration());
+        if (films.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(films.get(0));
+        }
     }
 }

@@ -162,4 +162,33 @@ class FilmDbStorageTest {
         films = filmStorage.getPopularFilms(2);
         assertThat(films.get(1).getName()).isEqualTo("Test second");
     }
+
+    @Test
+    public void getCommonFilmsByUsersTest() {
+        List<Film> films = filmStorage.getCommonFilmsByUsers(1L, 2L);
+        assertThat(films.isEmpty());
+
+        likeStorage.addLike(1L, 1L);
+        likeStorage.addLike(1L, 2L);
+        likeStorage.addLike(2L, 2L);
+
+        films = filmStorage.getCommonFilmsByUsers(1L, 2L);
+
+        assertThat(films.get(0).getName()).isEqualTo("Test first");
+    }
+
+    @Test
+    public void getRecommendationsTest() {
+        List<Film> films = filmStorage.getRecommendations(1L);
+        assertThat(films.isEmpty());
+
+        likeStorage.addLike(1L, 1L);
+        likeStorage.addLike(1L, 2L);
+        likeStorage.addLike(2L, 2L);
+
+        films = filmStorage.getRecommendations(1L);
+
+        assertThat(films.get(0).getName()).isEqualTo("Test second");
+
+    }
 }

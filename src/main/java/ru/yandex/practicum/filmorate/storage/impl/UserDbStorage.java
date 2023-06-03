@@ -2,9 +2,11 @@ package ru.yandex.practicum.filmorate.storage.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exceptions.OnUpdateException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -16,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static ru.yandex.practicum.filmorate.storage.SqlQueries.DELETE_USER;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -25,20 +29,24 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User addUser(User user) {
-        SimpleJdbcInsert insert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("users")
-                .usingGeneratedKeyColumns("user_id");
+        try {
+            SimpleJdbcInsert insert = new SimpleJdbcInsert(jdbcTemplate)
+                    .withTableName("users")
+                    .usingGeneratedKeyColumns("user_id");
 
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("name", user.getName());
-        parameters.put("email", user.getEmail());
-        parameters.put("login", user.getLogin());
-        parameters.put("birthday", Date.valueOf(user.getBirthday()));
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("name", user.getName());
+            parameters.put("email", user.getEmail());
+            parameters.put("login", user.getLogin());
+            parameters.put("birthday", Date.valueOf(user.getBirthday()));
 
-        Number userId = insert.executeAndReturnKey(parameters);
+            Number userId = insert.executeAndReturnKey(parameters);
 
-        user.setId(userId.longValue());
-        return user;
+            user.setId(userId.longValue());
+            return user;
+        } catch (DataAccessException e) {
+            throw new OnUpdateException("This user already exists");
+        }
     }
 
     @Override
@@ -51,6 +59,11 @@ public class UserDbStorage implements UserStorage {
                 user.getBirthday(),
                 user.getId());
         return user;
+    }
+
+    @Override
+    public void deleteUser(Long id) {
+        jdbcTemplate.update(DELETE_USER, id);
     }
 
     @Override
