@@ -6,10 +6,9 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
-import ru.yandex.practicum.filmorate.storage.like.LikeStorage;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.LikeStorage;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +25,7 @@ public class FilmService {
 
     public Film addLike(Long filmId, Long userId) {
         Film film = checkFilmExistent(filmId);
-        checkUserExistent(userId);
+        userService.checkUserExistent(userId);
         likeStorage.addLike(filmId, userId);
         log.info("Film {} liked by user {}", filmId, userId);
         return film;
@@ -34,7 +33,7 @@ public class FilmService {
 
     public Film deleteLike(Long filmId, Long userId) {
         Film film = checkFilmExistent(filmId);
-        checkUserExistent(userId);
+        userService.checkUserExistent(userId);
         likeStorage.deleteLike(filmId, userId);
         log.info("User {} deleted his like from film {}", userId, filmId);
         return film;
@@ -83,14 +82,11 @@ public class FilmService {
         return film;
     }
 
-    private Film checkFilmExistent(Long id) {
+    public Film checkFilmExistent(Long id) {
         return filmStorage
                 .findFilmById(id)
                 .orElseThrow(() -> new EntityNotFoundException(Film.class, "Id:" + id));
     }
 
-    private User checkUserExistent(Long id) {
-        return userService.checkUserExistent(id);
-    }
 
 }
