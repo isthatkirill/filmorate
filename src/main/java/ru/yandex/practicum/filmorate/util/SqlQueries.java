@@ -99,13 +99,12 @@ public class SqlQueries {
             "GROUP BY f.film_id\n" +
             "ORDER BY total_likes DESC\n";
 
-    public static final String GET_SIMILAR_USER = "SELECT DISTINCT user2 FROM (" +
+    public static final String GET_SIMILAR_USER = "SELECT user2 FROM (" +
             "SELECT t1.user_id AS user1, t2.user_id AS user2, " +
             "ROW_NUMBER() OVER (PARTITION BY t1.user_id ORDER BY count(t2.film_id) desc) AS row_num " +
             "FROM films_likes t1 " +
             "JOIN films_likes t2 ON t1.film_id = t2.film_id " +
-            "JOIN films_likes t3 ON t1.user_id = t3.user_id " +
-            "WHERE t2.user_id != ? " +
+            "WHERE t1.user_id = ? AND t2.user_id IN (SELECT DISTINCT user_id FROM films_likes WHERE user_id != ?) " +
             "GROUP BY t1.user_id, t2.user_id) " +
             "WHERE row_num = 1";
 

@@ -152,7 +152,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private List<Long> getSimilarUser(Long userId) {
-        return jdbcTemplate.query(GET_SIMILAR_USER, ID_SIMILAR_MAPPER, userId);
+        return jdbcTemplate.query(GET_SIMILAR_USER, ID_SIMILAR_MAPPER, userId, userId);
     }
 
     private Optional<Film> findMatch(Film film) {
