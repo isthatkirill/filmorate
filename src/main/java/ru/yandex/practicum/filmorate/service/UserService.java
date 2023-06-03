@@ -4,13 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.OnUpdateException;
-import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.friendship.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -18,92 +17,80 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserStorage userStorage;
-    private Long id = 0L;
+    private final FriendshipStorage friendshipStorage;
 
     public User addFriend(Long userId, Long friendId) {
         User user = checkUserExistent(userId);
-        User friend = checkUserExistent(friendId);
-        if (user.getFriends().contains(friendId)) {
-            throw new OnUpdateException("Users are already friends");
-        } else {
-            user.addFriend(friendId);
-            friend.addFriend(userId);
-            log.info("User " + userId + " added user " + friendId + " to the friend list");
-            return friend;
+        checkUserExistent(friendId);
+        if (friendshipStorage.checkIfFriends(userId, friendId)) {
+            throw new OnUpdateException("This user is already in your list");
         }
+        friendshipStorage.addFriend(userId, friendId);
+        log.info("User {} added user {} to the friend list", userId, friendId);
+        return user;
     }
 
     public User deleteFriend(Long userId, Long friendId) {
         User user = checkUserExistent(userId);
-        User friend = checkUserExistent(friendId);
-        if (!user.deleteFriend(friendId)) {
-            throw new UserNotFoundException("This user not is your friend");
-        } else {
-            friend.deleteFriend(userId);
-            log.info("User " + userId + " removed user " + friendId + " from friend list");
-            return friend;
+        checkUserExistent(friendId);
+        if (!friendshipStorage.checkIfFriends(userId, friendId)) {
+            throw new OnUpdateException("This user not is your friend");
         }
+        friendshipStorage.deleteFriend(userId, friendId);
+        log.info("User {} removed user {} from friend list", userId, friendId);
+        return user;
     }
 
-    public List<User> getCommonFriends(Long userId, Long friendId) {
-        User user = checkUserExistent(userId);
-        User friend = checkUserExistent(friendId);
-
-        log.info("User with id " + userId + "requested a list of mutual friends with user " + friendId);
-        List<Long> usersFriends = user.getFriends();
-        List<Long> friendFriends = friend.getFriends();
-
-        return getFriendsByTheirIds(usersFriends.stream()
-                .filter(friendFriends::contains)
-                .collect(Collectors.toList()));
+    public List<User> getCommonFriends(Long firstUserId, Long secondUserId) {
+        checkUserExistent(firstUserId);
+        checkUserExistent(secondUserId);
+        log.info("User with id {} requested a list of mutual friends with user {}", firstUserId, secondUserId);
+        return friendshipStorage.getCommonFriends(firstUserId, secondUserId);
     }
 
+    public List<User> getAllFriends(Long userId) {
+        checkUserExistent(userId);
+        return getFriendsByUserId(userId);
+    }
 
     public User addUser(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-            log.info("For the user " + user.getLogin() + " login used as the name.");
-        }
-        user.setId(++id);
+        updateUserIfNameIsBlank(user);
         userStorage.addUser(user);
-        log.info("User added: " + user.getLogin());
+        log.info("User added: {}", user.getLogin());
         return user;
     }
 
     public User updateUser(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-            log.info("For the user " + user.getLogin() + " login used as the name.");
-        }
+        updateUserIfNameIsBlank(user);
         checkUserExistent(user.getId());
-        userStorage.updateUser(user);
-        return user;
+        return userStorage.updateUser(user);
     }
 
-    public User getUser(Long id) {
+    public User getUserById(Long id) {
+        log.info("Get user by id = {}", id);
         return checkUserExistent(id);
     }
 
-    public List<User> getAllFriends(Long id) {
-        User user = checkUserExistent(id);
-        return getFriendsByTheirIds(user.getFriends());
-    }
-
     public List<User> getAllUsers() {
-        return userStorage.getAllUsers();
-    }
-
-    public Map<Long, User> getAllUsersMap() {
-        return userStorage.getAllUsersMap();
+        List<User> users = userStorage.getAllUsers();
+        log.info("Number of users: {}", users.size());
+        return users;
     }
 
     public User checkUserExistent(Long id) {
         return userStorage
                 .findUserById(id)
-                .orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
+                .orElseThrow(() -> new EntityNotFoundException(User.class, "Id: " + id));
     }
 
-    private List<User> getFriendsByTheirIds(List<Long> usersId) {
-        return userStorage.getFriendsByTheirIds(usersId);
+    private void updateUserIfNameIsBlank(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+            log.info("For the user {} login used as the name.", user.getLogin());
+        }
+    }
+
+    private List<User> getFriendsByUserId(Long userId) {
+        return friendshipStorage.getFriendsByUserId(userId);
     }
 }
