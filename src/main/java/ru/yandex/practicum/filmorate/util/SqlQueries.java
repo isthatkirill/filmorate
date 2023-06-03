@@ -13,10 +13,9 @@ public class SqlQueries {
             "FROM films as f " +
             "LEFT JOIN films_likes AS fl ON f.film_id = fl.film_id " +
             "JOIN mpa ON f.mpa_id = mpa.mpa_id " +
-            "WHERE f.film_id IN (" +
-            "SELECT film_id FROM film_genres " +
-            "WHERE genre_id = ?) AND " +
-            "YEAR(f.release_date) = ? " +
+            "JOIN film_genres AS fg ON fg.film_id = f.film_id " +
+            "WHERE genre_id = ?" +
+            "AND YEAR(f.release_date) = ? " +
             "GROUP BY f.film_id " +
             "ORDER BY COUNT(fl.user_id) DESC " +
             "LIMIT ?";
@@ -33,9 +32,8 @@ public class SqlQueries {
             "FROM films as f " +
             "LEFT JOIN films_likes AS fl ON f.film_id = fl.film_id " +
             "JOIN mpa ON f.mpa_id = mpa.mpa_id " +
-            "WHERE f.film_id IN (" +
-            "SELECT film_id FROM film_genres " +
-            "WHERE genre_id = ?) " +
+            "JOIN film_genres AS fg ON fg.film_id = f.film_id " +
+            "WHERE genre_id = ?" +
             "GROUP BY f.film_id " +
             "ORDER BY COUNT(fl.user_id) DESC " +
             "LIMIT ?";
@@ -49,25 +47,21 @@ public class SqlQueries {
     public static final String UPDATE_FILM_BY_ID = "UPDATE FILMS set name = ?, description = ?, release_date = ?, " +
             "duration_minutes = ?, mpa_id = ? WHERE film_id = ?";
 
-    public static final String GET_COMMON_FILMS_BY_USERS = "SELECT f.*, mpa.name AS mpa_name " +
+    public static final String GET_FILMS_BY_LIST_IDS = "SELECT f.*, mpa.name AS mpa_name " +
             "FROM films as f " +
             "LEFT JOIN films_likes AS fl ON f.film_id = fl.film_id " +
             "LEFT JOIN mpa ON f.mpa_id = mpa.mpa_id " +
-            "WHERE f.film_id IN (SELECT film_id FROM films_likes WHERE user_id = ? " +
-            "INTERSECT " +
-            "SELECT film_id FROM films_likes  WHERE user_id = ?) " +
+            "WHERE f.film_id IN (%s) " +
             "GROUP BY f.film_id " +
             "ORDER BY COUNT(fl.user_id) DESC";
 
-    public static final String GET_RECOMMENDATIONS = "SELECT f.*, mpa.name AS mpa_name " +
-            "FROM films as f " +
-            "LEFT JOIN films_likes AS fl ON f.film_id = fl.film_id " +
-            "LEFT JOIN mpa ON f.mpa_id = mpa.mpa_id " +
-            "WHERE f.film_id IN (SELECT film_id FROM films_likes WHERE user_id = ? " +
+    public static final String GET_COMMON_FILMS_ID = "SELECT film_id FROM films_likes WHERE user_id = ? " +
+            "INTERSECT " +
+            "SELECT film_id FROM films_likes  WHERE user_id = ?";
+
+    public static final String GET_DIFFERENT_FILMS_ID = "SELECT film_id FROM films_likes WHERE user_id = ? " +
             "EXCEPT " +
-            "SELECT film_id FROM films_likes  WHERE user_id = ?) " +
-            "GROUP BY f.film_id " +
-            "ORDER BY COUNT(fl.user_id) DESC";
+            "SELECT film_id FROM films_likes  WHERE user_id = ?";
 
     public static final String FIND_FILMS_BY_DIRECTOR_ID = "SELECT films.*, mpa.name AS mpa_name " +
             "FROM films LEFT OUTER JOIN mpa ON films.mpa_id = mpa.mpa_id WHERE film_id IN " +
@@ -87,10 +81,9 @@ public class SqlQueries {
             "FROM films as f\n" +
             "LEFT JOIN films_likes AS fl ON f.film_id = fl.film_id\n" +
             "LEFT JOIN mpa ON f.mpa_id = mpa.mpa_id\n" +
-            "WHERE f.film_id IN (SELECT fd.film_id\n" +
-            "FROM film_directors AS fd WHERE director_id IN (SELECT director_id\n" +
-            "FROM directors AS d\n" +
-            "WHERE d.name ILIKE '%' || ? || '%'))\n" +
+            "LEFT JOIN film_directors AS fd ON f.film_id = fd.film_id\n" +
+            "LEFT JOIN directors AS d ON fd.director_id = d.director_id\n" +
+            "WHERE d.name ILIKE '%' || ? || '%'\n" +
             "GROUP BY f.film_id\n" +
             "ORDER BY total_likes DESC\n";
 
@@ -99,20 +92,20 @@ public class SqlQueries {
             "FROM films as f\n" +
             "LEFT JOIN films_likes AS fl ON f.film_id = fl.film_id\n" +
             "LEFT JOIN mpa ON f.mpa_id = mpa.mpa_id\n" +
-            "WHERE f.film_id IN (SELECT fd.film_id\n" +
-            "FROM film_directors AS fd WHERE director_id IN (SELECT director_id\n" +
-            "FROM directors AS d\n" +
-            "WHERE d.name ILIKE '%' || ? || '%'))\n" +
+            "LEFT JOIN film_directors AS fd ON f.film_id = fd.film_id\n" +
+            "LEFT JOIN directors AS d ON fd.director_id = d.director_id\n" +
+            "WHERE d.name ILIKE '%' || ? || '%'\n" +
             "OR f.name ILIKE '%' || ? || '%'\n" +
             "GROUP BY f.film_id\n" +
             "ORDER BY total_likes DESC\n";
 
-    public static final String GET_SIMILAR_USER = "SELECT user2 FROM (" +
+    public static final String GET_SIMILAR_USER = "SELECT DISTINCT user2 FROM (" +
             "SELECT t1.user_id AS user1, t2.user_id AS user2, " +
             "ROW_NUMBER() OVER (PARTITION BY t1.user_id ORDER BY count(t2.film_id) desc) AS row_num " +
             "FROM films_likes t1 " +
             "JOIN films_likes t2 ON t1.film_id = t2.film_id " +
-            "WHERE t1.user_id = ? AND t2.user_id IN (SELECT DISTINCT user_id FROM films_likes WHERE user_id != ?) " +
+            "JOIN films_likes t3 ON t1.user_id = t3.user_id " +
+            "WHERE t2.user_id != ? " +
             "GROUP BY t1.user_id, t2.user_id) " +
             "WHERE row_num = 1";
 
@@ -146,4 +139,21 @@ public class SqlQueries {
             "ORDER BY d.director_id ASC";
     public static final String GET_USER_FEED = "SELECT event_id, user_id, entity_id, event_type, operation, timestamp " +
             "FROM user_feed WHERE user_id IN (?)";
+
+    public static final String USEFUL_PLUS = "UPDATE reviews SET useful = useful + 1 WHERE review_id = ?";
+
+    public static final String USEFUL_MINUS = "UPDATE reviews SET useful = useful - 1 WHERE review_id = ?";
+
+    public static final String FIND_ALL_REVIEWS = "SELECT * FROM reviews WHERE film_id = IFNULL(?, film_id) ORDER BY useful DESC LIMIT ?";
+
+    public static final String FIND_REVIEW_BY_ID = "SELECT * FROM reviews WHERE review_id = ?";
+
+    public static final String UPDATE_REVIEW = "UPDATE reviews SET content = ?, is_positive = ? WHERE review_id = ?";
+
+    public static final String DELETE_REVIEW = "DELETE FROM reviews WHERE review_id = ?";
+
+    public static final String ADD_LIKE_OR_DISLIKE_REVIEW = "INSERT INTO review_likes VALUES (?, ?, ?)";
+
+    public static final String DELETE_LIKE_OR_DISLIKE_REVIEW = "DELETE FROM review_likes WHERE review_id = ? AND is_like = ?";
+
 }

@@ -61,12 +61,19 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
-        filmStorage.addFilm(film);
         Set<Genre> genres = film.getGenres();
+        Set<Director> directors = film.getDirectors();
+        if (directors != null && !directors.isEmpty()) {
+            for (Director director : directors) {
+                if (directorStorage.get((int) director.getId()).isEmpty()) {
+                    throw new EntityNotFoundException(Director.class, "Director not found id - " + director.getId());
+                }
+            }
+        }
+        filmStorage.addFilm(film);
         if (genres != null && !genres.isEmpty()) {
             genreStorage.saveFilmGenres(film);
         }
-        Set<Director> directors = film.getDirectors();
         if (directors != null && !directors.isEmpty()) {
             directorStorage.saveFilmDirectors(film);
         }

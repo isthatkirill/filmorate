@@ -33,6 +33,8 @@ public class Mappers {
 
     public static final RowMapper<Long> ID_SIMILAR_MAPPER = (rs, rowNum) -> rs.getLong("user2");
 
+    public static final RowMapper<Long> ID_FILM_MAPPER = (rs, rowNum) -> rs.getLong("film_id");
+
     public static final RowMapper<Film> FILM_MAPPER = (ResultSet rs, int rowNum) ->
             Film.builder()
                     .id(rs.getLong("film_id"))

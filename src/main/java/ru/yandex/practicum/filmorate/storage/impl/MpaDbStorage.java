@@ -34,7 +34,7 @@ public class MpaDbStorage implements MpaStorage {
             log.info("Mpa with id = {} not found", id);
             return Optional.empty();
         }
-        log.info("Genre found: {} {}", mpa.get(0).getId(), mpa.get(0).getName());
+        log.info("MPA found: {} {}", mpa.get(0).getId(), mpa.get(0).getName());
         return Optional.of(mpa.get(0));
     }
 

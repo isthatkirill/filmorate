@@ -5,15 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exceptions.OnUpdateException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.sql.Date;
 import java.util.*;
 
+import static ru.yandex.practicum.filmorate.util.Mappers.*;
 import static ru.yandex.practicum.filmorate.util.SqlQueries.*;
-import static ru.yandex.practicum.filmorate.util.Mappers.FILM_MAPPER;
-import static ru.yandex.practicum.filmorate.util.Mappers.ID_SIMILAR_MAPPER;
 
 @Slf4j
 @Component
@@ -28,7 +28,7 @@ public class FilmDbStorage implements FilmStorage {
         if (filmMatch.isPresent()) {
             film.setId(filmMatch.get().getId());
             log.info("Attempting to duplicate a film: {} {}", film.getId(), film.getName());
-            return film;
+            throw new OnUpdateException("This film already exists");
         }
 
         SimpleJdbcInsert insert = new SimpleJdbcInsert(jdbcTemplate)
@@ -124,7 +124,14 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getCommonFilmsByUsers(Long userId, Long friendId) {
-        return jdbcTemplate.query(GET_COMMON_FILMS_BY_USERS, FILM_MAPPER, userId, friendId);
+        List<Long> commonFilms = jdbcTemplate.query(GET_COMMON_FILMS_ID, ID_FILM_MAPPER, userId, friendId);
+
+        String inSql = String.join(",", Collections.nCopies(commonFilms.size(), "?"));
+
+        return jdbcTemplate.query(
+                String.format(GET_FILMS_BY_LIST_IDS, inSql),
+                FILM_MAPPER,
+                commonFilms.toArray());
     }
 
     public List<Film> getRecommendations(Long userId) {
@@ -135,14 +142,17 @@ public class FilmDbStorage implements FilmStorage {
             return Collections.emptyList();
         }
 
-        return jdbcTemplate.query(GET_RECOMMENDATIONS,
+        List<Long> diffFilms = jdbcTemplate.query(GET_DIFFERENT_FILMS_ID, ID_FILM_MAPPER, similarUser.get(0), userId);
+        String inSql = String.join(",", Collections.nCopies(diffFilms.size(), "?"));
+
+        return jdbcTemplate.query(
+                String.format(GET_FILMS_BY_LIST_IDS, inSql),
                 FILM_MAPPER,
-                similarUser.get(0),
-                userId);
+                diffFilms.toArray());
     }
 
     private List<Long> getSimilarUser(Long userId) {
-        return jdbcTemplate.query(GET_SIMILAR_USER, ID_SIMILAR_MAPPER, userId, userId);
+        return jdbcTemplate.query(GET_SIMILAR_USER, ID_SIMILAR_MAPPER, userId);
     }
 
     private Optional<Film> findMatch(Film film) {
