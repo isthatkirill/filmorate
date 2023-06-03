@@ -11,7 +11,7 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import java.sql.Date;
 import java.util.*;
 
-import static ru.yandex.practicum.filmorate.storage.SqlQueries.*;
+import static ru.yandex.practicum.filmorate.util.SqlQueries.*;
 import static ru.yandex.practicum.filmorate.util.Mappers.FILM_MAPPER;
 import static ru.yandex.practicum.filmorate.util.Mappers.ID_SIMILAR_MAPPER;
 

@@ -3,11 +3,14 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.annotation.SaveUserFeed;
 import ru.yandex.practicum.filmorate.exceptions.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.DirectorStorage;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.LikeStorage;
@@ -29,6 +32,12 @@ public class FilmService {
     private final DirectorStorage directorStorage;
 
 
+    @SaveUserFeed(
+            value = EventType.LIKE,
+            operation = Operation.ADD,
+            userIdPropertyName = "userId",
+            entityIdPropertyName = "filmId"
+    )
     public Film addLike(Long filmId, Long userId) {
         Film film = checkFilmExistent(filmId);
         userService.checkUserExistent(userId);
@@ -37,6 +46,12 @@ public class FilmService {
         return film;
     }
 
+    @SaveUserFeed(
+            value = EventType.LIKE,
+            operation = Operation.REMOVE,
+            userIdPropertyName = "userId",
+            entityIdPropertyName = "filmId"
+    )
     public Film deleteLike(Long filmId, Long userId) {
         Film film = checkFilmExistent(filmId);
         userService.checkUserExistent(userId);
