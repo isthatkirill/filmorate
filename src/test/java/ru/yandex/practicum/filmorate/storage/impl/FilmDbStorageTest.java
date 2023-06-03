@@ -7,9 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.LikeStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -31,10 +33,12 @@ class FilmDbStorageTest {
     private final FilmStorage filmStorage;
     private final LikeStorage likeStorage;
     private final UserStorage userStorage;
+    private final DirectorStorage directorStorage;
     private Film firstFilm;
     private Film secondFilm;
     private User firstUser;
     private User secondUser;
+    private Director director;
 
     @BeforeEach
     public void beforeEach() {
@@ -75,6 +79,12 @@ class FilmDbStorageTest {
                 .birthday(LocalDate.of(2004, 11, 23))
                 .build();
         userStorage.addUser(secondUser);
+
+        director = Director.builder()
+                .id(1L)
+                .name("Test director")
+                .build();
+        directorStorage.save(director);
     }
 
     @Test
@@ -162,6 +172,27 @@ class FilmDbStorageTest {
         films = filmStorage.getPopularFilms(2);
         assertThat(films.get(1).getName()).isEqualTo("Test second");
     }
+
+    @Test
+    public void findFilmListDirectorTest() {
+
+        directorStorage.addDirectorForFilmById(firstFilm.getId(), director.getId());
+        directorStorage.addDirectorForFilmById(secondFilm.getId(), director.getId());
+
+        List<Film> films = filmStorage.findFilmListDirectorById(director.getId());
+
+        assertThat(films)
+                .satisfies(f -> {
+                    assertThat(f).hasSize(2);
+                    assertThat(f.stream()
+                            .map(Film::getName)
+                            .collect(Collectors.toList()))
+                            .containsExactly("Test first", "Test second");
+                });
+
+    }
+
+
 
     @Test
     public void getCommonFilmsByUsersTest() {

@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static ru.yandex.practicum.filmorate.util.SqlQueries.*;
 import static ru.yandex.practicum.filmorate.util.Mappers.DIRECTOR_MAPPER;
 
 @Slf4j
@@ -28,8 +29,7 @@ public class DirectorDBStorage implements DirectorStorage {
 
     @Override
     public Optional<Director> get(Integer id) {
-        String query = "SELECT * FROM directors WHERE director_id = ?";
-        List<Director> directors = jdbcTemplate.query(query, DIRECTOR_MAPPER, id);
+        List<Director> directors = jdbcTemplate.query(FIND_DIRECTOR_BY_ID, DIRECTOR_MAPPER, id);
         if (directors.isEmpty()) {
             log.info("Director with id = {} not found", id);
             return Optional.empty();
@@ -40,25 +40,26 @@ public class DirectorDBStorage implements DirectorStorage {
 
     @Override
     public List<Director> getAll() {
-        String sql = "SELECT * FROM directors";
-        return jdbcTemplate.query(sql, DIRECTOR_MAPPER);
+        return jdbcTemplate.query(FIND_ALL_DIRECTORS, DIRECTOR_MAPPER);
     }
 
     @Override
     public Film saveFilmDirectors(Film film) {
-        String query = "INSERT INTO film_directors(film_id, director_id) VALUES (?, ?)";
         List<Object[]> batchArgs = film.getDirectors().stream()
                 .map(director -> new Object[]{film.getId(), director.getId()})
                 .collect(Collectors.toList());
-        jdbcTemplate.batchUpdate(query, batchArgs);
+        jdbcTemplate.batchUpdate(SAVE_FILM_DIRECTORS, batchArgs);
         return film;
     }
 
     @Override
-    public void deleteDirectorsByFilmId(Long filmId) {
-        String sql = "DELETE FROM film_directors WHERE film_id = ?";
-        jdbcTemplate.update(sql, filmId);
+    public void addDirectorForFilmById(Long filmId, long directorId) {
+        jdbcTemplate.update(ADD_DIRECTOR_FOR_FILM_BY_ID, filmId, directorId);
+    }
 
+    @Override
+    public void deleteDirectorsByFilmId(Long filmId) {
+        jdbcTemplate.update(DELETE_DIRECTORS_BY_FILM_ID, filmId);
     }
 
     @Override
@@ -72,16 +73,15 @@ public class DirectorDBStorage implements DirectorStorage {
 
         jdbcTemplate.query(sqlQuery, rs -> {
             final Film film = filmById.get(rs.getLong("film_id"));
-            film.addDirector(makeDirector(rs, 0));
+            film.addDirector(makeDirector(rs));
         }, films.stream().map(Film::getId).toArray());
     }
 
     @Override
     public Director save(Director director) {
-        String sql = "INSERT INTO directors (name) VALUES (?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
-            PreparedStatement stmt = connection.prepareStatement(sql, new String[]{"director_id"});
+            PreparedStatement stmt = connection.prepareStatement(SAVE_DIRECTOR, new String[]{"director_id"});
             stmt.setString(1, director.getName());
             return stmt;
         }, keyHolder);
@@ -91,18 +91,21 @@ public class DirectorDBStorage implements DirectorStorage {
 
     @Override
     public Director update(Director director) {
-        String sql = "UPDATE directors SET name = ? WHERE director_id = ?";
-        jdbcTemplate.update(sql, director.getName(), director.getId());
+        jdbcTemplate.update(UPDATE_DIRECTOR, director.getName(), director.getId());
         return director;
     }
 
     @Override
     public void delete(Director director) {
-        String sql = "DELETE FROM directors WHERE director_id = ?";
-        this.jdbcTemplate.update(sql,director.getId());
+        this.jdbcTemplate.update(DELETE_DIRECTOR,director.getId());
     }
 
-    private Director makeDirector(ResultSet rs, int rowNum) throws SQLException {
+    @Override
+    public Set<Director> getDirectorByFilmId(Long id) {
+        return new HashSet<>(jdbcTemplate.query(GET_DIRECTOR_BY_FILM_ID, DIRECTOR_MAPPER, id));
+    }
+
+    private Director makeDirector(ResultSet rs) throws SQLException {
         return Director.builder()
                 .id(rs.getInt("director_id"))
                 .name(rs.getString("name"))

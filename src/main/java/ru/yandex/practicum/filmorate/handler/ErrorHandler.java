@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.exceptions.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.OnUpdateException;
+import ru.yandex.practicum.filmorate.exceptions.UserFeedFieldNotFoundException;
 
 import javax.validation.ConstraintViolationException;
 import java.sql.SQLException;
@@ -61,5 +62,12 @@ public class ErrorHandler {
     public ErrorResponse dbError(final SQLException e) {
         log.warn("{}: {}", e.getClass().getSimpleName(), e.getMessage());
         return new ErrorResponse("Internal error while working with db", e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handle(final UserFeedFieldNotFoundException e) {
+        log.warn(e.getMessage());
+        return new ErrorResponse("Internal error ", e.getMessage());
     }
 }

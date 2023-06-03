@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static ru.yandex.practicum.filmorate.storage.SqlQueries.DELETE_USER;
+import static ru.yandex.practicum.filmorate.util.SqlQueries.DELETE_USER;
 
 @Slf4j
 @Component

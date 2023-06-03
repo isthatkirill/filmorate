@@ -3,9 +3,14 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.annotation.SaveUserFeed;
 import ru.yandex.practicum.filmorate.exceptions.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.UserFeed;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
+import ru.yandex.practicum.filmorate.storage.UserFeedStorage;
 
 import java.util.List;
 
@@ -15,9 +20,16 @@ import java.util.List;
 public class ReviewService {
 
     private final ReviewStorage reviewStorage;
+    private final UserFeedStorage userFeedStorage;
     private final FilmService filmService;
     private final UserService userService;
 
+    @SaveUserFeed(
+            value = EventType.REVIEW,
+            operation = Operation.ADD,
+            userIdPropertyName = "userId",
+            entityIdPropertyName = "reviewId"
+    )
     public Review addReview(Review review) {
         userService.checkUserExistent(review.getUserId());
         filmService.checkFilmExistent(review.getFilmId());
@@ -37,15 +49,37 @@ public class ReviewService {
         return checkReviewExistent(id);
     }
 
+
     public Review updateReview(Review review) {
-        checkReviewExistent(review.getReviewId());
+        Review foundedReview = checkReviewExistent(review.getReviewId());
+        UserFeed userFeed = UserFeed.builder()
+                .userId(foundedReview.getUserId())
+                .entityId(foundedReview.getReviewId())
+                .eventType(EventType.REVIEW)
+                .operation(Operation.UPDATE)
+                .timestamp(System.currentTimeMillis())
+                .build();
+
+        userFeedStorage.save(userFeed);
         log.info("Review updated: id = {}", review.getReviewId());
         return reviewStorage.update(review);
     }
 
+
     public void deleteReviewById(Long id) {
-        log.info("Review deleted: id = {}", id);
+        Review review = checkReviewExistent(id);
+
         reviewStorage.deleteById(id);
+        UserFeed userFeed = UserFeed.builder()
+                .userId(review.getUserId())
+                .entityId(review.getReviewId())
+                .eventType(EventType.REVIEW)
+                .operation(Operation.REMOVE)
+                .timestamp(System.currentTimeMillis())
+                .build();
+
+        userFeedStorage.save(userFeed);
+        log.info("Review deleted: id = {}", id);
     }
 
     public void addLikeToReview(Long id, Long userId) {

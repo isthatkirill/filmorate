@@ -3,9 +3,14 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.annotation.SaveUserFeed;
 import ru.yandex.practicum.filmorate.exceptions.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.OnUpdateException;
+import ru.yandex.practicum.filmorate.model.UserFeed;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
+import ru.yandex.practicum.filmorate.storage.UserFeedStorage;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -17,8 +22,15 @@ import java.util.List;
 public class UserService {
 
     private final UserStorage userStorage;
+    private final UserFeedStorage userFeedStorage;
     private final FriendshipStorage friendshipStorage;
 
+    @SaveUserFeed(
+            value = EventType.FRIEND,
+            operation = Operation.ADD,
+            userIdPropertyName = "userId",
+            entityIdPropertyName = "friendId"
+    )
     public User addFriend(Long userId, Long friendId) {
         User user = checkUserExistent(userId);
         checkUserExistent(friendId);
@@ -30,6 +42,12 @@ public class UserService {
         return user;
     }
 
+    @SaveUserFeed(
+            value = EventType.FRIEND,
+            operation = Operation.REMOVE,
+            userIdPropertyName = "userId",
+            entityIdPropertyName = "friendId"
+    )
     public User deleteFriend(Long userId, Long friendId) {
         User user = checkUserExistent(userId);
         checkUserExistent(friendId);
@@ -102,5 +120,10 @@ public class UserService {
 
     private List<User> getFriendsByUserId(Long userId) {
         return friendshipStorage.getFriendsByUserId(userId);
+    }
+
+    public List<UserFeed> getFeed(Long userId) {
+        checkUserExistent(userId);
+        return userFeedStorage.getAllByUserId(userId);
     }
 }
