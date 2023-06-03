@@ -6,10 +6,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.storage.LikeStorage;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
+
+import static ru.yandex.practicum.filmorate.util.Mappers.LIKE_MAPPER;
 
 @Slf4j
 @Component
@@ -33,11 +33,8 @@ public class LikeDbStorage implements LikeStorage {
     @Override
     public Set<Long> getLikesByFilmId(Long filmId) {
         String query = "SELECT user_id FROM films_likes WHERE film_id = ?";
-        return new HashSet<>(jdbcTemplate.query(query, (rs, rowNum)
-                -> makeLikeId(rs, rowNum), filmId));
+        return new HashSet<>(jdbcTemplate.query(query, LIKE_MAPPER, filmId));
     }
 
-    private Long makeLikeId(ResultSet rs, int rowNum) throws SQLException {
-        return rs.getLong("user_id");
-    }
+
 }

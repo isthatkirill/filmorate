@@ -7,7 +7,9 @@ import lombok.EqualsAndHashCode;
 @Data
 @Builder
 public class Genre {
+
     private Integer id;
+
     @EqualsAndHashCode.Exclude
     private String name;
 }

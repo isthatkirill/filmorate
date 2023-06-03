@@ -88,11 +88,11 @@ class FriendshipDbStorageTest {
     @Test
     public void checkIfFriendsTest() {
         friendshipStorage.addFriend(1L, 2L);
-        boolean ifFriends = friendshipStorage.checkIfFriends(1L, 2L);
+        boolean ifFriends = friendshipStorage.existsByUserIdAndFriendId(1L, 2L);
 
         assertThat(ifFriends).isTrue();
 
-        ifFriends = friendshipStorage.checkIfFriends(2L, 1L);
+        ifFriends = friendshipStorage.existsByUserIdAndFriendId(2L, 1L);
 
         assertThat(ifFriends).isFalse();
     }

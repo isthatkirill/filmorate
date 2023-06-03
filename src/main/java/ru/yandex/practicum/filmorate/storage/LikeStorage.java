@@ -9,5 +9,4 @@ public interface LikeStorage {
     void deleteLike(Long filmId, Long userId);
 
     Set<Long> getLikesByFilmId(Long filmId);
-
 }
