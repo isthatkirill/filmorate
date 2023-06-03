@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
@@ -19,6 +21,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final FilmService filmService;
 
     @PostMapping
     public User addUser(@RequestBody @Valid User user) {
@@ -45,6 +48,11 @@ public class UserController {
         return userService.addFriend(id, friendId);
     }
 
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable Long userId) {
+        userService.deleteUser(userId);
+    }
+
     @DeleteMapping("/{id}/friends/{friendId}")
     public User deleteFriend(@PathVariable @NonNull Long id, @PathVariable @NonNull Long friendId) {
         return userService.deleteFriend(id, friendId);
@@ -60,4 +68,8 @@ public class UserController {
         return userService.getCommonFriends(id, otherId);
     }
 
+    @GetMapping("/{id}/recommendations")
+    public List<Film> getRecommendations(@PathVariable Long id) {
+        return filmService.getRecommendations(id);
+    }
 }

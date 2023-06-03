@@ -44,15 +44,15 @@ CREATE TABLE IF NOT EXISTS films_likes (
 	film_id LONG NOT NULL,
 	user_id LONG NOT NULL,
 	PRIMARY KEY (film_id, user_id),
-	FOREIGN KEY (film_id) REFERENCES films(film_id),
-	FOREIGN KEY (user_id) REFERENCES users(user_id)
+	FOREIGN KEY (film_id) REFERENCES films(film_id) ON DELETE CASCADE,
+	FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS film_genres (
 	film_id LONG NOT NULL,
 	genre_id INTEGER NOT NULL,
 	PRIMARY KEY (film_id, genre_id),
-	FOREIGN KEY (film_id) REFERENCES films(film_id),
+	FOREIGN KEY (film_id) REFERENCES films(film_id) ON DELETE CASCADE,
 	FOREIGN KEY (genre_id) REFERENCES genres(genre_id)
 );
 
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS film_directors (
 	film_id LONG NOT NULL,
 	director_id INTEGER NOT NULL,
 	PRIMARY KEY (film_id, director_id),
-	FOREIGN KEY (film_id) REFERENCES films(film_id),
+	FOREIGN KEY (film_id) REFERENCES films(film_id) ON DELETE CASCADE,
 	FOREIGN KEY (director_id) REFERENCES directors(director_id)
 );
 
@@ -68,8 +68,8 @@ CREATE TABLE IF NOT EXISTS user_friends (
 	user_id LONG NOT NULL,
 	friend_id LONG NOT NULL,
 	PRIMARY KEY (user_id, friend_id),
-	FOREIGN KEY (user_id) REFERENCES users(user_id),
-	FOREIGN KEY (friend_id) REFERENCES users(user_id)
+	FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+	FOREIGN KEY (friend_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS reviews (
@@ -79,13 +79,13 @@ CREATE TABLE IF NOT EXISTS reviews (
 	user_id LONG,
 	film_id LONG,
 	useful INTEGER,
-	FOREIGN KEY (user_id) REFERENCES users(user_id),
-	FOREIGN KEY (film_id) REFERENCES films(film_id)
+	FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+	FOREIGN KEY (film_id) REFERENCES films(film_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS review_likes (
-	review_id LONG,
-	user_id LONG,
+	review_id LONG NOT NULL,
+	user_id LONG NOT NULL,
 	is_like BOOLEAN,
 	FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE
 );

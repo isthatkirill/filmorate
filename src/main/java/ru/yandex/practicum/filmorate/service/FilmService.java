@@ -7,10 +7,10 @@ import ru.yandex.practicum.filmorate.exceptions.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.LikeStorage;
-import ru.yandex.practicum.filmorate.storage.DirectorStorage;
 
 import java.util.Comparator;
 import java.util.List;
@@ -76,6 +76,12 @@ public class FilmService {
         return film;
     }
 
+    public void deleteFilm(Long id) {
+        checkFilmExistent(id);
+        log.info("Film id = {} deleted", id);
+        filmStorage.deleteFilm(id);
+    }
+
     public List<Film> getAllFilms() {
         List<Film> allFilms = filmStorage.getAllFilms();
         genreStorage.setGenresFilms(allFilms);
@@ -84,8 +90,17 @@ public class FilmService {
         return allFilms;
     }
 
-    public List<Film> getPopularFilms(Integer count) {
-        List<Film> popularFilms = filmStorage.getPopularFilms(count);
+    public List<Film> getPopularFilms(Integer count, Long genreId, Short year) {
+        List<Film> popularFilms;
+        if (genreId != null && year != null) {
+            popularFilms = filmStorage.getPopularFilmsByGenreAndYear(count, genreId, year);
+        } else if (year != null) {
+            popularFilms = filmStorage.getPopularFilmsByYear(count, year);
+        } else if (genreId != null) {
+            popularFilms = filmStorage.getPopularFilmsByGenre(count, genreId);
+        } else {
+            popularFilms = filmStorage.getPopularFilms(count);
+        }
         genreStorage.setGenresFilms(popularFilms);
         directorStorage.setDirectorsFilms(popularFilms);
         log.info("Returned {} most popular films", count);
@@ -98,6 +113,21 @@ public class FilmService {
         genreStorage.setGenresFilms(List.of(film));
         directorStorage.setDirectorsFilms(List.of(film));
         return film;
+    }
+
+    public List<Film> searchFilms(String query, List<String> searchBy) {
+        List<Film> filmsByQuery;
+        if (searchBy.size() == 1 && searchBy.get(0).equals("title")) {
+            filmsByQuery = filmStorage.searchFilmsByTitle(query);
+        } else if (searchBy.size() == 1 && searchBy.get(0).equals("director")) {
+            filmsByQuery = filmStorage.searchFilmByDirector(query);
+        } else {
+            filmsByQuery = filmStorage.searchFilmsByTitleAndDirector(query);
+        }
+        genreStorage.setGenresFilms(filmsByQuery);
+        directorStorage.setDirectorsFilms(filmsByQuery);
+        log.info("Search film by query = {}", query);
+        return filmsByQuery;
     }
 
     public Film checkFilmExistent(Long id) {
@@ -139,4 +169,11 @@ public class FilmService {
         return commonFilms;
     }
 
+    public List<Film> getRecommendations(Long id) {
+        userService.checkUserExistent(id);
+        List<Film> recommendations = filmStorage.getRecommendations(id);
+        genreStorage.setGenresFilms(recommendations);
+        log.info("Returned recommended films for user {}", id);
+        return recommendations;
+    }
 }

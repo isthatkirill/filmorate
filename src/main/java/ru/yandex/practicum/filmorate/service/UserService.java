@@ -66,6 +66,12 @@ public class UserService {
         return userStorage.updateUser(user);
     }
 
+    public void deleteUser(Long id) {
+        checkUserExistent(id);
+        log.info("User deleted: {}", id);
+        userStorage.deleteUser(id);
+    }
+
     public User getUserById(Long id) {
         log.info("Get user by id = {}", id);
         return checkUserExistent(id);
