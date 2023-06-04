@@ -27,7 +27,7 @@ import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFOR
 @DirtiesContext(classMode = BEFORE_EACH_TEST_METHOD)
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-public class DirectorDBStorageTest {
+class DirectorDBStorageTest {
 
     private final DirectorStorage directorStorage;
     private final FilmStorage filmStorage;
@@ -62,7 +62,7 @@ public class DirectorDBStorageTest {
 
     @Test
     public void getDirectorTest() {
-        Optional<Director> optionalDirector = directorStorage.get(1);
+        Optional<Director> optionalDirector = directorStorage.get(1L);
 
         assertThat(optionalDirector)
                 .isPresent()
@@ -89,7 +89,6 @@ public class DirectorDBStorageTest {
 
     @Test
     void addDirectorTest() {
-
         assertThat(directorStorage.getAll()).hasSize(2);
     }
 
@@ -100,7 +99,7 @@ public class DirectorDBStorageTest {
                 .name("Test first updated")
                 .build();
         directorStorage.update(testDirector);
-        Optional<Director> optionalDirector = directorStorage.get(1);
+        Optional<Director> optionalDirector = directorStorage.get(1L);
 
         assertThat(optionalDirector)
                 .isPresent()
@@ -114,16 +113,17 @@ public class DirectorDBStorageTest {
     @Test
     void deleteDirectorTest() {
         directorStorage.delete(director1);
-        Optional<Director> dirtectorDeleteOptional = directorStorage.get(1);
-        assertFalse(dirtectorDeleteOptional.isPresent());
+        Optional<Director> directorDeleteOptional = directorStorage.get(1L);
+
+        assertFalse(directorDeleteOptional.isPresent());
     }
 
     @Test
     public void addFilmDirectorsTest() {
         directorStorage.addDirectorForFilmById(film.getId(), 1L);
         directorStorage.addDirectorForFilmById(film.getId(), 2L);
-
         Set<Director> directors = directorStorage.getDirectorByFilmId(film.getId());
+
         assertThat(directors)
                 .hasSize(2)
                 .map(Director::getName)
@@ -145,10 +145,8 @@ public class DirectorDBStorageTest {
         addFilmDirectorsTest();
         directorStorage.setDirectorsFilms(List.of(film));
 
-        assertThat(film).satisfies(f -> {
-            assertThat(f.getDirectors().stream()
-                    .map(Director::getName)).containsExactlyInAnyOrder("Test first", "Test second");
-        });
+        assertThat(film).satisfies(f -> assertThat(f.getDirectors().stream()
+                .map(Director::getName)).containsExactlyInAnyOrder("Test first", "Test second"));
     }
 
 }

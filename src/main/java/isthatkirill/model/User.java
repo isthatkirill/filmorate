@@ -1,24 +1,27 @@
 package isthatkirill.model;
 
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.FieldDefaults;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
 
 @Data
 @Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
     @Positive
-    private Long id;
+    Long id;
     @Email
     @NotBlank
-    private String email;
+    String email;
     @NotBlank
     @Pattern(regexp = "^[^ ]+$")
-    private String login;
-    private String name;
+    String login;
+    String name;
     @NotNull
     @PastOrPresent
-    private LocalDate birthday;
+    LocalDate birthday;
 }

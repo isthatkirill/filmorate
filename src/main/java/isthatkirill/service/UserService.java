@@ -111,6 +111,11 @@ public class UserService {
         return friendshipStorage.existsByUserIdAndFriendId(userId, friendId);
     }
 
+    public List<UserFeed> getFeed(Long userId) {
+        checkUserExistent(userId);
+        return userFeedStorage.getAllByUserId(userId);
+    }
+
     private void updateUserIfNameIsBlank(User user) {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
@@ -120,10 +125,5 @@ public class UserService {
 
     private List<User> getFriendsByUserId(Long userId) {
         return friendshipStorage.getFriendsByUserId(userId);
-    }
-
-    public List<UserFeed> getFeed(Long userId) {
-        checkUserExistent(userId);
-        return userFeedStorage.getAllByUserId(userId);
     }
 }

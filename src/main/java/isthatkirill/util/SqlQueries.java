@@ -155,4 +155,36 @@ public class SqlQueries {
 
     public static final String DELETE_LIKE_OR_DISLIKE_REVIEW = "DELETE FROM review_likes WHERE review_id = ? AND is_like = ?";
 
+    public static final String ADD_FRIEND = "INSERT INTO user_friends VALUES (?, ?)";
+
+    public static final String GET_FRIENDS_BY_USER_ID = "SELECT * FROM users\n" +
+            "WHERE user_id IN (SELECT friend_id FROM user_friends WHERE user_id = ?)";
+
+    public static final String DELETE_FRIEND = "DELETE FROM user_friends WHERE friend_id = ? AND user_id = ?";
+
+    public static final String CHECK_IF_FRIENDS = "SELECT COUNT(*) as count_must_be_1 \n" +
+            "FROM user_friends \n" +
+            "WHERE user_id = ? AND friend_id = ?";
+
+    public static final String COMMON_FRIENDS = "SELECT * FROM users \n" +
+            "WHERE user_id IN \n" +
+            "(SELECT friend_id FROM user_friends WHERE user_id = ? \n" +
+            "INTERSECT \n" +
+            "SELECT friend_id FROM user_friends WHERE user_id = ?)";
+
+    public static final String LIKES_BY_FILM_ID = "SELECT user_id FROM films_likes WHERE film_id = ?";
+
+    public static final String DELETE_LIKE = "DELETE FROM films_likes WHERE film_id = ? and user_id = ?";
+
+    public static final String ADD_LIKE = "INSERT INTO films_likes (film_id, user_id) values (?, ?)";
+
+    public static final String GET_ALL_MPA = "SELECT * FROM mpa ORDER BY mpa_id ASC";
+
+    public static final String FIND_MPA_BY_ID = "SELECT * FROM mpa WHERE mpa_id = ?";
+
+    public static final String UPDATE_USER = "UPDATE users SET name = ?, email = ?, login = ?, birthday = ? WHERE user_id = ?";
+
+    public static final String GET_ALL_USERS = "SELECT * FROM users";
+
+    public static final String FIND_USER_BY_ID = "SELECT * FROM users WHERE user_id = ?";
 }

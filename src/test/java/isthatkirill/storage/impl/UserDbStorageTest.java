@@ -101,7 +101,7 @@ class UserDbStorageTest {
 
     @Test
     public void findUserByIdTest() {
-        Optional<User> userOptional = userStorage.findUserById(1);
+        Optional<User> userOptional = userStorage.findUserById(1L);
 
         assertThat(userOptional)
                 .isPresent()
@@ -118,7 +118,7 @@ class UserDbStorageTest {
 
     @Test
     public void findNonExistentUserTest() {
-        Optional<User> userOptional = userStorage.findUserById(9999);
+        Optional<User> userOptional = userStorage.findUserById(9999L);
 
         assertThat(userOptional)
                 .isNotPresent();

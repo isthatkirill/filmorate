@@ -1,8 +1,10 @@
 package isthatkirill.model;
 
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import isthatkirill.util.ReleaseDate;
+import lombok.experimental.FieldDefaults;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -14,25 +16,24 @@ import java.util.Set;
 
 @Data
 @Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Film {
     @Positive
-    private Long id;
+    Long id;
     @NotBlank
-    private String name;
+    String name;
     @NotNull
     @Size(max = 200)
-    private String description;
+    String description;
     @ReleaseDate
-    private LocalDate releaseDate;
+    LocalDate releaseDate;
     @NotNull
     @Positive
-    private Integer duration;
+    Integer duration;
     @NotNull
-    private Mpa mpa;
-
-    private final Set<Genre> genres = new HashSet<>();
-
-    private final Set<Director> directors = new HashSet<>();
+    Mpa mpa;
+    final Set<Genre> genres = new HashSet<>();
+    final Set<Director> directors = new HashSet<>();
 
     public void addGenre(Genre genre) {
         genres.add(genre);
@@ -41,5 +42,4 @@ public class Film {
     public void addDirector(Director director) {
         directors.add(director);
     }
-
 }

@@ -2,8 +2,6 @@ package isthatkirill.storage.impl;
 
 import isthatkirill.model.UserFeed;
 import isthatkirill.storage.UserFeedStorage;
-import isthatkirill.util.Mappers;
-import isthatkirill.util.SqlQueries;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -12,6 +10,9 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static isthatkirill.util.Mappers.USER_FEED_MAPPER;
+import static isthatkirill.util.SqlQueries.GET_USER_FEED;
 
 @Component
 @RequiredArgsConstructor
@@ -38,6 +39,6 @@ public class UserFeedDbStorage implements UserFeedStorage {
 
     @Override
     public List<UserFeed> getAllByUserId(Long id) {
-        return jdbcTemplate.query(SqlQueries.GET_USER_FEED, Mappers.USER_FEED_MAPPER, id);
+        return jdbcTemplate.query(GET_USER_FEED, USER_FEED_MAPPER, id);
     }
 }

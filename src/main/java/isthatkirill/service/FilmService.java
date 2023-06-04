@@ -2,18 +2,18 @@ package isthatkirill.service;
 
 import isthatkirill.annotation.SaveUserFeed;
 import isthatkirill.exceptions.EntityNotFoundException;
+import isthatkirill.model.Director;
 import isthatkirill.model.Film;
+import isthatkirill.model.Genre;
 import isthatkirill.model.enums.EventType;
 import isthatkirill.model.enums.Operation;
+import isthatkirill.storage.DirectorStorage;
 import isthatkirill.storage.FilmStorage;
 import isthatkirill.storage.GenreStorage;
 import isthatkirill.storage.LikeStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import isthatkirill.model.Director;
-import isthatkirill.model.Genre;
-import isthatkirill.storage.DirectorStorage;
 
 import java.util.Comparator;
 import java.util.List;
@@ -30,7 +30,6 @@ public class FilmService {
     private final GenreStorage genreStorage;
     private final UserService userService;
     private final DirectorStorage directorStorage;
-
 
     @SaveUserFeed(
             value = EventType.LIKE,
@@ -65,7 +64,7 @@ public class FilmService {
         Set<Director> directors = film.getDirectors();
         if (directors != null && !directors.isEmpty()) {
             for (Director director : directors) {
-                if (directorStorage.get((int) director.getId()).isEmpty()) {
+                if (directorStorage.get(director.getId()).isEmpty()) {
                     throw new EntityNotFoundException(Director.class, "Director not found id - " + director.getId());
                 }
             }
@@ -158,27 +157,22 @@ public class FilmService {
                 .orElseThrow(() -> new EntityNotFoundException(Film.class, "Id:" + id));
     }
 
-    public List<Film> sortFilmDirector(Integer directorId, String sort) {
+    public List<Film> sortFilmDirector(Long directorId, String sort) {
         List<Film> allFilms = filmStorage.findFilmListDirectorById(directorId);
         genreStorage.setGenresFilms(allFilms);
         directorStorage.setDirectorsFilms(allFilms);
-        if (directorStorage.get(directorId).isPresent()) {
-            if (sort.equals("year")) {
-                log.info("Get films director - {} sorted by release years. ", directorId);
-                return allFilms.stream().sorted(Comparator.comparing((Film film) -> film.getReleaseDate().getYear()))
-                        .collect(Collectors.toList());
-            } else if (sort.equals("likes")) {
-                log.info("Get films director - {} sorted by likes. ", directorId);
-                return allFilms.stream().sorted((film1, film2) -> likeStorage.getLikesByFilmId(film2.getId()).size() -
-                                likeStorage.getLikesByFilmId(film1.getId()).size())
-                        .collect(Collectors.toList());
-            } else {
-                log.info("Response sort list top films by Director - {}", directorId);
-                throw new EntityNotFoundException(Director.class, "Response sort list top films by Director - " + directorId);
-            }
+
+        directorStorage.get(directorId)
+                .orElseThrow(() -> new EntityNotFoundException(Director.class, "There is no director " + directorId + " id in the database"));
+
+        if (sort.equals("year")) {
+            log.info("Get films director - {} sorted by release years. ", directorId);
+            return sortFilmsByReleaseYear(allFilms);
+        } else if (sort.equals("likes")) {
+            log.info("Get films director - {} sorted by likes. ", directorId);
+            return sortFilmsByLikes(allFilms);
         } else {
-            log.info("There is no director - {} id in the database ", directorId);
-            throw new EntityNotFoundException(Director.class, "There is no director " + directorId + " id in the database");
+            throw new EntityNotFoundException(Director.class, "Response sort list top films by Director - " + directorId);
         }
     }
 
@@ -197,5 +191,18 @@ public class FilmService {
         genreStorage.setGenresFilms(recommendations);
         log.info("Returned recommended films for user {}", id);
         return recommendations;
+    }
+
+    private List<Film> sortFilmsByReleaseYear(List<Film> films) {
+        return films.stream()
+                .sorted(Comparator.comparing((Film film) -> film.getReleaseDate().getYear()))
+                .collect(Collectors.toList());
+    }
+
+    private List<Film> sortFilmsByLikes(List<Film> films) {
+        return films.stream()
+                .sorted((film1, film2) -> likeStorage.getLikesByFilmId(film2.getId()).size() -
+                        likeStorage.getLikesByFilmId(film1.getId()).size())
+                .collect(Collectors.toList());
     }
 }

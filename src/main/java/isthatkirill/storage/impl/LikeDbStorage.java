@@ -1,7 +1,6 @@
 package isthatkirill.storage.impl;
 
 import isthatkirill.storage.LikeStorage;
-import isthatkirill.util.Mappers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -10,6 +9,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import static isthatkirill.util.Mappers.LIKE_MAPPER;
+import static isthatkirill.util.SqlQueries.*;
 
 @Slf4j
 @Component
@@ -21,22 +23,19 @@ public class LikeDbStorage implements LikeStorage {
     @Override
     public void addLike(Long filmId, Long userId) {
         try {
-            String query = "INSERT INTO films_likes (film_id, user_id) values (?, ?)";
-            jdbcTemplate.update(query, filmId, userId);
+            jdbcTemplate.update(ADD_LIKE, filmId, userId);
         } catch (DataAccessException ignored) {
         }
     }
 
     @Override
     public void deleteLike(Long filmId, Long userId) {
-        String query = "DELETE FROM films_likes WHERE film_id = ? and user_id = ?";
-        jdbcTemplate.update(query, filmId, userId);
+        jdbcTemplate.update(DELETE_LIKE, filmId, userId);
     }
 
     @Override
     public Set<Long> getLikesByFilmId(Long filmId) {
-        String query = "SELECT user_id FROM films_likes WHERE film_id = ?";
-        return new HashSet<>(jdbcTemplate.query(query, Mappers.LIKE_MAPPER, filmId));
+        return new HashSet<>(jdbcTemplate.query(LIKES_BY_FILM_ID, LIKE_MAPPER, filmId));
     }
 
 

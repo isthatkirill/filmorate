@@ -1,18 +1,12 @@
 package isthatkirill.util;
 
-import isthatkirill.model.Review;
-import isthatkirill.model.UserFeed;
+import isthatkirill.model.*;
 import isthatkirill.model.enums.EventType;
 import isthatkirill.model.enums.Operation;
 import org.springframework.jdbc.core.RowMapper;
-import isthatkirill.model.Film;
-import isthatkirill.model.Mpa;
-import isthatkirill.model.Director;
-
-import java.sql.ResultSet;
 
 public class Mappers {
-    public static final RowMapper<Review> REVIEW_MAPPER = (ResultSet rs, int rowNum) ->
+    public static final RowMapper<Review> REVIEW_MAPPER = (rs, rowNum) ->
             Review.builder()
                     .reviewId(rs.getLong("review_id"))
                     .content(rs.getString("content"))
@@ -22,20 +16,20 @@ public class Mappers {
                     .useful(rs.getInt("useful"))
                     .build();
 
-    public static final RowMapper<Director> DIRECTOR_MAPPER = (ResultSet rs, int rowNum) ->
+    public static final RowMapper<Director> DIRECTOR_MAPPER = (rs, rowNum) ->
             Director.builder()
-                    .id(rs.getInt("director_id"))
+                    .id(rs.getLong("director_id"))
                     .name(rs.getString("name"))
                     .build();
 
 
-    public static final RowMapper<Long> LIKE_MAPPER = (ResultSet rs, int rowNum) -> rs.getLong("user_id");
+    public static final RowMapper<Long> LIKE_MAPPER = (rs, rowNum) -> rs.getLong("user_id");
 
     public static final RowMapper<Long> ID_SIMILAR_MAPPER = (rs, rowNum) -> rs.getLong("user2");
 
     public static final RowMapper<Long> ID_FILM_MAPPER = (rs, rowNum) -> rs.getLong("film_id");
 
-    public static final RowMapper<Film> FILM_MAPPER = (ResultSet rs, int rowNum) ->
+    public static final RowMapper<Film> FILM_MAPPER = (rs, rowNum) ->
             Film.builder()
                     .id(rs.getLong("film_id"))
                     .name(rs.getString("name"))
@@ -45,7 +39,7 @@ public class Mappers {
                     .mpa(new Mpa(rs.getInt("mpa_id"), rs.getString("mpa_name")))
                     .build();
 
-    public static final RowMapper<UserFeed> USER_FEED_MAPPER = (ResultSet rs, int rowNum) ->
+    public static final RowMapper<UserFeed> USER_FEED_MAPPER = (rs, rowNum) ->
             UserFeed.builder()
                     .eventId(rs.getLong("event_id"))
                     .userId(rs.getLong("user_id"))
@@ -53,5 +47,20 @@ public class Mappers {
                     .eventType(EventType.valueOf(rs.getString("event_type")))
                     .operation(Operation.valueOf(rs.getString("operation")))
                     .timestamp(rs.getLong("timestamp"))
+                    .build();
+
+    public static final RowMapper<User> USER_MAPPER = (rs, rowNum) ->
+            User.builder()
+                    .id(rs.getLong("user_id"))
+                    .email(rs.getString("email"))
+                    .name(rs.getString("name"))
+                    .login(rs.getString("login"))
+                    .birthday(rs.getDate("birthday").toLocalDate())
+                    .build();
+
+    public static final RowMapper<Mpa> MPA_MAPPER = (rs, rowNum) ->
+            Mpa.builder()
+                    .id(rs.getInt("mpa_id"))
+                    .name(rs.getString("name"))
                     .build();
 }

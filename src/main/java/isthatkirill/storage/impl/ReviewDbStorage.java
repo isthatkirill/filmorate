@@ -3,8 +3,6 @@ package isthatkirill.storage.impl;
 import isthatkirill.exceptions.EntityNotFoundException;
 import isthatkirill.model.Review;
 import isthatkirill.storage.ReviewStorage;
-import isthatkirill.util.Mappers;
-import isthatkirill.util.SqlQueries;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -16,6 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static isthatkirill.util.Mappers.REVIEW_MAPPER;
+import static isthatkirill.util.SqlQueries.*;
 
 @Slf4j
 @Component
@@ -44,12 +45,12 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public List<Review> getAll(Long filmId, Integer count) {
-        return jdbcTemplate.query(SqlQueries.FIND_ALL_REVIEWS, Mappers.REVIEW_MAPPER, filmId, count);
+        return jdbcTemplate.query(FIND_ALL_REVIEWS, REVIEW_MAPPER, filmId, count);
     }
 
     @Override
     public Optional<Review> findById(Long id) {
-        List<Review> reviews = jdbcTemplate.query(SqlQueries.FIND_REVIEW_BY_ID, Mappers.REVIEW_MAPPER, id);
+        List<Review> reviews = jdbcTemplate.query(FIND_REVIEW_BY_ID, REVIEW_MAPPER, id);
         if (reviews.isEmpty()) {
             log.info("Review with id = {} not found", id);
             return Optional.empty();
@@ -60,21 +61,21 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public Review update(Review review) {
-        jdbcTemplate.update(SqlQueries.UPDATE_REVIEW, review.getContent(), review.getIsPositive(), review.getReviewId());
+        jdbcTemplate.update(UPDATE_REVIEW, review.getContent(), review.getIsPositive(), review.getReviewId());
         return findById(review.getReviewId())
                 .orElseThrow(() -> new EntityNotFoundException(Review.class, "Id: " + review.getReviewId()));
     }
 
     @Override
     public void deleteById(Long id) {
-        jdbcTemplate.update(SqlQueries.DELETE_REVIEW, id);
+        jdbcTemplate.update(DELETE_REVIEW, id);
     }
 
     @Override
     public void addLike(Long id, Long userId) {
         try {
-            if (jdbcTemplate.update(SqlQueries.ADD_LIKE_OR_DISLIKE_REVIEW, id, userId, true) > 0) {
-                jdbcTemplate.update(SqlQueries.USEFUL_PLUS, id);
+            if (jdbcTemplate.update(ADD_LIKE_OR_DISLIKE_REVIEW, id, userId, true) > 0) {
+                jdbcTemplate.update(USEFUL_PLUS, id);
             }
         } catch (DataAccessException ignored) {
 
@@ -83,16 +84,16 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public void deleteLike(Long id) {
-        if (jdbcTemplate.update(SqlQueries.DELETE_LIKE_OR_DISLIKE_REVIEW, id, true) > 0) {
-            jdbcTemplate.update(SqlQueries.USEFUL_MINUS, id);
+        if (jdbcTemplate.update(DELETE_LIKE_OR_DISLIKE_REVIEW, id, true) > 0) {
+            jdbcTemplate.update(USEFUL_MINUS, id);
         }
     }
 
     @Override
     public void addDislike(Long id, Long userId) {
         try {
-            if (jdbcTemplate.update(SqlQueries.ADD_LIKE_OR_DISLIKE_REVIEW, id, userId, false) > 0) {
-                jdbcTemplate.update(SqlQueries.USEFUL_MINUS, id);
+            if (jdbcTemplate.update(ADD_LIKE_OR_DISLIKE_REVIEW, id, userId, false) > 0) {
+                jdbcTemplate.update(USEFUL_MINUS, id);
             }
         } catch (DataAccessException ignored) {
 
@@ -101,8 +102,8 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public void deleteDislike(Long id) {
-        if (jdbcTemplate.update(SqlQueries.DELETE_LIKE_OR_DISLIKE_REVIEW, id, false) > 0) {
-            jdbcTemplate.update(SqlQueries.USEFUL_PLUS, id);
+        if (jdbcTemplate.update(DELETE_LIKE_OR_DISLIKE_REVIEW, id, false) > 0) {
+            jdbcTemplate.update(USEFUL_PLUS, id);
         }
     }
 

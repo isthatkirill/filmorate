@@ -3,6 +3,7 @@ package isthatkirill.handler;
 import isthatkirill.exceptions.EntityNotFoundException;
 import isthatkirill.exceptions.OnUpdateException;
 import isthatkirill.exceptions.UserFeedFieldNotFoundException;
+import isthatkirill.model.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,7 +15,7 @@ import javax.validation.ConstraintViolationException;
 import java.sql.SQLException;
 
 @Slf4j
-@RestControllerAdvice("ru.yandex.practicum.filmorate")
+@RestControllerAdvice("isthatkirill")
 public class ErrorHandler {
 
     @ExceptionHandler

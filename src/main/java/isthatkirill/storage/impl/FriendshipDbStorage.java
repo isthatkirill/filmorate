@@ -1,15 +1,16 @@
 package isthatkirill.storage.impl;
 
+import isthatkirill.model.User;
 import isthatkirill.storage.FriendshipStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import isthatkirill.model.User;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
+
+import static isthatkirill.util.Mappers.USER_MAPPER;
+import static isthatkirill.util.SqlQueries.*;
 
 @Slf4j
 @Component
@@ -20,53 +21,30 @@ public class FriendshipDbStorage implements FriendshipStorage {
 
     @Override
     public Long addFriend(Long userId, Long friendId) {
-        String query = "INSERT INTO user_friends VALUES (?, ?)";
-        jdbcTemplate.update(query, userId, friendId);
+        jdbcTemplate.update(ADD_FRIEND, userId, friendId);
         return friendId;
     }
 
     @Override
     public List<User> getFriendsByUserId(Long userId) {
-        String query = "SELECT * FROM users \n" +
-                "WHERE user_id IN (SELECT friend_id FROM user_friends WHERE user_id = ?)";
-        return jdbcTemplate.query(query, (rs, rowNum) -> makeUser(rs, rowNum), userId);
+        return jdbcTemplate.query(GET_FRIENDS_BY_USER_ID, USER_MAPPER, userId);
     }
 
     @Override
     public Long deleteFriend(Long userId, Long friendId) {
-        String query = "DELETE FROM user_friends WHERE friend_id = ? AND user_id = ?";
-        jdbcTemplate.update(query, friendId, userId);
+        jdbcTemplate.update(DELETE_FRIEND, friendId, userId);
         return userId;
     }
 
     @Override
     public Boolean existsByUserIdAndFriendId(Long userId, Long friendId) {
-        String query = "SELECT COUNT(*) as count_must_be_1 \n" +
-                "FROM user_friends \n" +
-                "WHERE user_id = ? AND friend_id = ?";
-        return jdbcTemplate.query(query, (rs, rowNum)
+        return jdbcTemplate.query(CHECK_IF_FRIENDS, (rs, rowNum)
                 -> rs.getInt("count_must_be_1"), userId, friendId).get(0) == 1;
     }
 
     @Override
     public List<User> getCommonFriends(Long firstUserId, Long secondUserId) {
-        String query = "SELECT * FROM users \n" +
-                "WHERE user_id IN \n" +
-                "(SELECT friend_id FROM user_friends WHERE user_id = ? \n" +
-                "INTERSECT \n" +
-                "SELECT friend_id FROM user_friends WHERE user_id = ?)";
-        return jdbcTemplate.query(query, (rs, rowNum)
-                -> makeUser(rs, rowNum), firstUserId, secondUserId);
-    }
-
-    private User makeUser(ResultSet rs, int rowNum) throws SQLException {
-        return User.builder()
-                .id(rs.getLong("user_id"))
-                .email(rs.getString("email"))
-                .name(rs.getString("name"))
-                .login(rs.getString("login"))
-                .birthday(rs.getDate("birthday").toLocalDate())
-                .build();
+        return jdbcTemplate.query(COMMON_FRIENDS, USER_MAPPER, firstUserId, secondUserId);
     }
 
 

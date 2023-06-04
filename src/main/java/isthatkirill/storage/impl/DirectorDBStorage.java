@@ -2,15 +2,14 @@ package isthatkirill.storage.impl;
 
 import isthatkirill.model.Director;
 import isthatkirill.model.Film;
+import isthatkirill.storage.DirectorStorage;
 import isthatkirill.util.Mappers;
-import isthatkirill.util.SqlQueries;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import isthatkirill.storage.DirectorStorage;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,6 +17,8 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static isthatkirill.util.SqlQueries.*;
 
 @Slf4j
 @Component
@@ -27,8 +28,8 @@ public class DirectorDBStorage implements DirectorStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public Optional<Director> get(Integer id) {
-        List<Director> directors = jdbcTemplate.query(SqlQueries.FIND_DIRECTOR_BY_ID, Mappers.DIRECTOR_MAPPER, id);
+    public Optional<Director> get(Long id) {
+        List<Director> directors = jdbcTemplate.query(FIND_DIRECTOR_BY_ID, Mappers.DIRECTOR_MAPPER, id);
         if (directors.isEmpty()) {
             log.info("Director with id = {} not found", id);
             return Optional.empty();
@@ -39,7 +40,7 @@ public class DirectorDBStorage implements DirectorStorage {
 
     @Override
     public List<Director> getAll() {
-        return jdbcTemplate.query(SqlQueries.FIND_ALL_DIRECTORS, Mappers.DIRECTOR_MAPPER);
+        return jdbcTemplate.query(FIND_ALL_DIRECTORS, Mappers.DIRECTOR_MAPPER);
     }
 
     @Override
@@ -47,18 +48,18 @@ public class DirectorDBStorage implements DirectorStorage {
         List<Object[]> batchArgs = film.getDirectors().stream()
                 .map(director -> new Object[]{film.getId(), director.getId()})
                 .collect(Collectors.toList());
-        jdbcTemplate.batchUpdate(SqlQueries.SAVE_FILM_DIRECTORS, batchArgs);
+        jdbcTemplate.batchUpdate(SAVE_FILM_DIRECTORS, batchArgs);
         return film;
     }
 
     @Override
     public void addDirectorForFilmById(Long filmId, long directorId) {
-        jdbcTemplate.update(SqlQueries.ADD_DIRECTOR_FOR_FILM_BY_ID, filmId, directorId);
+        jdbcTemplate.update(ADD_DIRECTOR_FOR_FILM_BY_ID, filmId, directorId);
     }
 
     @Override
     public void deleteDirectorsByFilmId(Long filmId) {
-        jdbcTemplate.update(SqlQueries.DELETE_DIRECTORS_BY_FILM_ID, filmId);
+        jdbcTemplate.update(DELETE_DIRECTORS_BY_FILM_ID, filmId);
     }
 
     @Override
@@ -80,7 +81,7 @@ public class DirectorDBStorage implements DirectorStorage {
     public Director save(Director director) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
-            PreparedStatement stmt = connection.prepareStatement(SqlQueries.SAVE_DIRECTOR, new String[]{"director_id"});
+            PreparedStatement stmt = connection.prepareStatement(SAVE_DIRECTOR, new String[]{"director_id"});
             stmt.setString(1, director.getName());
             return stmt;
         }, keyHolder);
@@ -90,23 +91,23 @@ public class DirectorDBStorage implements DirectorStorage {
 
     @Override
     public Director update(Director director) {
-        jdbcTemplate.update(SqlQueries.UPDATE_DIRECTOR, director.getName(), director.getId());
+        jdbcTemplate.update(UPDATE_DIRECTOR, director.getName(), director.getId());
         return director;
     }
 
     @Override
     public void delete(Director director) {
-        this.jdbcTemplate.update(SqlQueries.DELETE_DIRECTOR,director.getId());
+        this.jdbcTemplate.update(DELETE_DIRECTOR, director.getId());
     }
 
     @Override
     public Set<Director> getDirectorByFilmId(Long id) {
-        return new HashSet<>(jdbcTemplate.query(SqlQueries.GET_DIRECTOR_BY_FILM_ID, Mappers.DIRECTOR_MAPPER, id));
+        return new HashSet<>(jdbcTemplate.query(GET_DIRECTOR_BY_FILM_ID, Mappers.DIRECTOR_MAPPER, id));
     }
 
     private Director makeDirector(ResultSet rs) throws SQLException {
         return Director.builder()
-                .id(rs.getInt("director_id"))
+                .id(rs.getLong("director_id"))
                 .name(rs.getString("name"))
                 .build();
     }

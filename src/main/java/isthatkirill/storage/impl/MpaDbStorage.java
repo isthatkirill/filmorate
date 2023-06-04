@@ -1,16 +1,18 @@
 package isthatkirill.storage.impl;
 
+import isthatkirill.model.Mpa;
 import isthatkirill.storage.MpaStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import isthatkirill.model.Mpa;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+
+import static isthatkirill.util.Mappers.MPA_MAPPER;
+import static isthatkirill.util.SqlQueries.FIND_MPA_BY_ID;
+import static isthatkirill.util.SqlQueries.GET_ALL_MPA;
 
 @Slf4j
 @Component
@@ -21,15 +23,12 @@ public class MpaDbStorage implements MpaStorage {
 
     @Override
     public List<Mpa> getAllMpa() {
-        String query = "SELECT * FROM mpa ORDER BY mpa_id ASC";
-        return jdbcTemplate.query(query, (rs, rowNum) -> makeMpa(rs, rowNum));
+        return jdbcTemplate.query(GET_ALL_MPA, MPA_MAPPER);
     }
 
     @Override
     public Optional<Mpa> findMpaById(int id) {
-        String query = "SELECT * FROM mpa WHERE mpa_id = ?";
-        List<Mpa> mpa = jdbcTemplate.query(query, (rs, rowNum)
-                -> makeMpa(rs, rowNum), id);
+        List<Mpa> mpa = jdbcTemplate.query(FIND_MPA_BY_ID, MPA_MAPPER, id);
         if (mpa.isEmpty()) {
             log.info("Mpa with id = {} not found", id);
             return Optional.empty();
@@ -38,10 +37,4 @@ public class MpaDbStorage implements MpaStorage {
         return Optional.of(mpa.get(0));
     }
 
-    private Mpa makeMpa(ResultSet rs, int rowNum) throws SQLException {
-        return Mpa.builder()
-                .id(rs.getInt("mpa_id"))
-                .name(rs.getString("name"))
-                .build();
-    }
 }

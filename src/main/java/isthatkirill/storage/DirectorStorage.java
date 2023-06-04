@@ -9,7 +9,7 @@ import java.util.Set;
 
 public interface DirectorStorage {
 
-    Optional<Director> get(Integer id);
+    Optional<Director> get(Long id);
 
     List<Director> getAll();
 

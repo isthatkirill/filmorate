@@ -1,12 +1,12 @@
 package isthatkirill.storage.impl;
 
 import isthatkirill.model.Film;
+import isthatkirill.model.Genre;
 import isthatkirill.storage.GenreStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import isthatkirill.model.Genre;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

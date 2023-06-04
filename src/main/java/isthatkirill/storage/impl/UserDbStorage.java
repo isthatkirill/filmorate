@@ -12,12 +12,13 @@ import isthatkirill.exceptions.OnUpdateException;
 import isthatkirill.model.User;
 
 import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static isthatkirill.util.Mappers.USER_MAPPER;
+import static isthatkirill.util.SqlQueries.*;
 
 @Slf4j
 @Component
@@ -51,8 +52,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User updateUser(User user) {
-        String sqlQuery = "UPDATE users SET name = ?, email = ?, login = ?, birthday = ? WHERE user_id = ?";
-        jdbcTemplate.update(sqlQuery,
+        jdbcTemplate.update(UPDATE_USER,
                 user.getName(),
                 user.getEmail(),
                 user.getLogin(),
@@ -68,30 +68,20 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getAllUsers() {
-        String query = "SELECT * FROM users";
-        return jdbcTemplate.query(query, (rs, rowNum) -> makeUser(rs, rowNum));
+        return jdbcTemplate.query(GET_ALL_USERS, USER_MAPPER);
     }
 
     @Override
-    public Optional<User> findUserById(long id) {
-        String query = "SELECT * FROM users WHERE user_id = ?";
-        List<User> users = jdbcTemplate.query(query, (rs, rowNum)
-                -> makeUser(rs, rowNum), id);
+    public Optional<User> findUserById(Long id) {
+        List<User> users = jdbcTemplate.query(FIND_USER_BY_ID, USER_MAPPER, id);
         if (users.isEmpty()) {
             log.info("User with id = {} not found", id);
             return Optional.empty();
         }
+
         log.info("User found: {} {}", users.get(0).getId(), users.get(0).getName());
         return Optional.of(users.get(0));
     }
 
-    private User makeUser(ResultSet rs, int rowNum) throws SQLException {
-        return User.builder()
-                .id(rs.getLong("user_id"))
-                .email(rs.getString("email"))
-                .name(rs.getString("name"))
-                .login(rs.getString("login"))
-                .birthday(rs.getDate("birthday").toLocalDate())
-                .build();
-    }
+
 }

@@ -125,9 +125,7 @@ class GenreDbStorageTest {
         addGenreForFilmByIdTest();
         genreStorage.setGenresFilms(List.of(film));
 
-        assertThat(film).satisfies(f -> {
-            assertThat(f.getGenres().stream()
-                    .map(Genre::getName)).containsExactlyInAnyOrder("Комедия", "Драма");
-        });
+        assertThat(film).satisfies(f -> assertThat(f.getGenres().stream()
+                .map(Genre::getName)).containsExactlyInAnyOrder("Комедия", "Драма"));
     }
 }
