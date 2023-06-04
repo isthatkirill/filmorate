@@ -18,13 +18,6 @@ Filmorate is a REST API application that implements the following functionality:
 - view the user's event feed
 
 ## Implemented endpoints
-
-<style>
-  details h3:first-of-type {
-    margin-top: 2px;
-  }
-</style>
-
 <details> 
  <summary><h3>Users</h3></summary>
 
